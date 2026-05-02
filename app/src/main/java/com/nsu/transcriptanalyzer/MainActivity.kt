@@ -27,43 +27,64 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ── 1. Secure preferences (EncryptedSharedPreferences) ─────────────
+        // ── 1. Secure token storage ─────────────────────────────────────────
         securePrefs = SecurePreferencesManager(applicationContext)
 
-        // ── 2. Initialise Retrofit with AuthTokenInterceptor ────────────────
-        val baseUrl = getString(R.string.backend_url)
+        // ── 2. Retrofit – use constant BASE_URL or resource override ─────────
+        //    build.gradle.kts resValue sets backend_url to the Render URL.
+        //    RetrofitClient.BASE_URL is the hardcoded fallback.
+        val baseUrl = try {
+            getString(R.string.backend_url).takeIf { it.isNotBlank() }
+                ?: RetrofitClient.BASE_URL
+        } catch (e: Exception) {
+            RetrofitClient.BASE_URL
+        }
+
         RetrofitClient.init(
-            context    = applicationContext,
-            baseUrl    = baseUrl,
+            context     = applicationContext,
+            baseUrl     = baseUrl,
             securePrefs = securePrefs
         )
 
         // ── 3. Repository & ViewModels ──────────────────────────────────────
-        repository       = TranscriptRepository(applicationContext, RetrofitClient.apiService, securePrefs)
-        authViewModel    = AuthViewModel(repository)
+        repository        = TranscriptRepository(applicationContext, RetrofitClient.apiService, securePrefs)
+        authViewModel     = AuthViewModel(repository)
         analysisViewModel = AnalysisViewModel(repository)
-        historyViewModel = HistoryViewModel(repository)
+        historyViewModel  = HistoryViewModel(repository)
 
         setContent {
-            val authUiState by authViewModel.uiState.collectAsState()
+            val authUiState     by authViewModel.uiState.collectAsState()
+            val analysisUiState by analysisViewModel.uiState.collectAsState()
+            val historyUiState  by historyViewModel.uiState.collectAsState()
+
+            // ── Handle 401 from ANY ViewModel → force re-login ──────────────
+            LaunchedEffect(analysisUiState.requiresReLogin) {
+                if (analysisUiState.requiresReLogin) {
+                    authViewModel.logout()
+                    analysisViewModel.clearReLogin()
+                }
+            }
+            LaunchedEffect(historyUiState.requiresReLogin) {
+                if (historyUiState.requiresReLogin) {
+                    authViewModel.logout()
+                    historyViewModel.clearReLogin()
+                }
+            }
 
             Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF0D1B4F)) {
                 MainScreen(
                     authViewModel     = authViewModel,
                     analysisViewModel = analysisViewModel,
                     historyViewModel  = historyViewModel,
-                    // Derive authentication state from ViewModel (not hardcoded true)
                     isAuthenticated   = authUiState.isAuthenticated,
                     onGoogleSignInClick = {
-                        // Pass the Activity context (this) – required by Credential Manager
+                        // Must pass Activity context for Credential Manager bottom-sheet
                         authViewModel.signInWithGoogle(
-                            activityContext = this,
+                            activityContext = this@MainActivity,
                             webClientId     = getString(R.string.google_client_id)
                         )
                     },
-                    onLogout = {
-                        authViewModel.logout()
-                    }
+                    onLogout = { authViewModel.logout() }
                 )
             }
         }

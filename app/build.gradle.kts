@@ -17,9 +17,13 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Google OAuth configuration
-        resValue("string", "google_client_id", "91951666469-7q7ku41hvq9lj8fp5219338r0p6eq4jq.apps.googleusercontent.com")
-            resValue("string", "backend_url", "http://192.168.0.103:5000/")
+        // ── Google OAuth – Web Client ID (used as serverClientId so the ID-token
+        //    aud matches GOOGLE_CLIENT_ID on the Render backend)
+        resValue("string", "google_client_id",
+            "516187756859-mt03oj1718igjf3dkq039u2i48iu3coe.apps.googleusercontent.com")
+        // ── Production Render backend – trailing slash required by Retrofit
+        resValue("string", "backend_url",
+            "https://android-transcript-analyzer.onrender.com/")
     }
 
     buildFeatures {

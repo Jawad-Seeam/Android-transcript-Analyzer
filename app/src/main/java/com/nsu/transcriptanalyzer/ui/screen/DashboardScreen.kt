@@ -235,6 +235,18 @@ private fun CsvPickerSection(vm: AnalysisViewModel, state: AnalysisUiState) {
             buttonText = if (state.selectedFileName != null) "Change File" else "Browse CSV",
             tint       = if (state.selectedFileName != null) GreenOk else Accent
         ) { launcher.launch(arrayOf("text/csv", "text/comma-separated-values")) }
+
+        // OCR extract from CSV to get manual_text
+        if (state.selectedFileName != null) {
+            Spacer(Modifier.height(12.dp))
+            OcrExtractButton(
+                isLoading   = state.isOcrLoading,
+                isDone      = state.ocrExtractedText != null,
+                buttonText  = "Extract from CSV",
+                onExtract   = { vm.extractOcr(context) }
+            )
+            OcrStatusRow(state)
+        }
     }
 }
 
@@ -255,6 +267,18 @@ private fun PdfPickerSection(vm: AnalysisViewModel, state: AnalysisUiState) {
             buttonText = if (state.selectedFileName != null) "Change File" else "Browse PDF",
             tint       = if (state.selectedFileName != null) GreenOk else Accent
         ) { launcher.launch(arrayOf("application/pdf")) }
+
+        // Step 1: Extract text via OCR before analyzing
+        if (state.selectedFileName != null) {
+            Spacer(Modifier.height(12.dp))
+            OcrExtractButton(
+                isLoading  = state.isOcrLoading,
+                isDone     = state.ocrExtractedText != null,
+                buttonText = "Extract Text (OCR)",
+                onExtract  = { vm.extractOcr(context) }
+            )
+            OcrStatusRow(state)
+        }
     }
 }
 
@@ -334,12 +358,24 @@ private fun ImagePickerSection(vm: AnalysisViewModel, state: AnalysisUiState) {
             }
         }
 
+        // Image extract
         if (state.selectedImageUri != null) {
+            Spacer(Modifier.height(8.dp))
+            OcrExtractButton(
+                isLoading  = state.isOcrLoading,
+                isDone     = state.ocrExtractedText != null,
+                buttonText = "Extract Text (OCR)",
+                onExtract  = { vm.extractOcr(context) }
+            )
+            OcrStatusRow(state)
+        }
+
+        if (state.selectedImageUri != null && state.ocrExtractedText == null && !state.isOcrLoading) {
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.CheckCircle, null, tint = GreenOk, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Image ready for upload", color = GreenOk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("Image selected. Tap 'Extract Text' above.", color = GreenOk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -421,40 +457,53 @@ private fun CourseInputRow(
         color = Color(0xFFF5F8FF),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            OutlinedTextField(
-                value = course.code,
-                onValueChange = { onCourseChange(course.copy(code = it.uppercase())) },
-                label = { Text("Code", fontSize = 10.sp) },
-                singleLine = true,
-                modifier = Modifier.weight(1.4f),
-                textStyle = MaterialTheme.typography.bodySmall,
-                shape = RoundedCornerShape(8.dp)
-            )
-            OutlinedTextField(
-                value = course.credits,
-                onValueChange = { onCourseChange(course.copy(credits = it)) },
-                label = { Text("Cr", fontSize = 10.sp) },
-                singleLine = true,
-                modifier = Modifier.weight(0.65f),
-                textStyle = MaterialTheme.typography.bodySmall,
-                shape = RoundedCornerShape(8.dp)
-            )
-            OutlinedTextField(
-                value = course.grade,
-                onValueChange = { onCourseChange(course.copy(grade = it.uppercase())) },
-                label = { Text("Grade", fontSize = 10.sp) },
-                singleLine = true,
-                modifier = Modifier.weight(0.85f),
-                textStyle = MaterialTheme.typography.bodySmall,
-                shape = RoundedCornerShape(8.dp)
-            )
-            if (showRemove) {
-                IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.DeleteOutline, null, tint = ErrText, modifier = Modifier.size(18.dp))
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OutlinedTextField(
+                    value = course.code,
+                    onValueChange = { onCourseChange(course.copy(code = it.uppercase())) },
+                    label = { Text("Code", fontSize = 10.sp) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1.4f),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                OutlinedTextField(
+                    value = course.credits,
+                    onValueChange = { onCourseChange(course.copy(credits = it)) },
+                    label = { Text("Cr", fontSize = 10.sp) },
+                    singleLine = true,
+                    modifier = Modifier.weight(0.65f),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                OutlinedTextField(
+                    value = course.grade,
+                    onValueChange = { onCourseChange(course.copy(grade = it.uppercase())) },
+                    label = { Text("Grade", fontSize = 10.sp) },
+                    singleLine = true,
+                    modifier = Modifier.weight(0.85f),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                if (showRemove) {
+                    IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Default.DeleteOutline, null, tint = ErrText, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
+            // Semester field – required by backend (format: "Spring 2024")
+            OutlinedTextField(
+                value = course.semester,
+                onValueChange = { onCourseChange(course.copy(semester = it)) },
+                label = { Text("Semester (e.g. Spring 2024)", fontSize = 10.sp) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodySmall,
+                shape = RoundedCornerShape(8.dp),
+                placeholder = { Text("Spring 2024", fontSize = 10.sp, color = TextSec) }
+            )
         }
     }
 }
@@ -466,3 +515,61 @@ private fun resolveFileName(context: android.content.Context, uri: Uri): String?
         if (col != -1 && cursor.moveToFirst()) cursor.getString(col) else null
     }
 } catch (e: Exception) { null }
+
+// ─── OCR Extract composables ──────────────────────────────────────────────────
+
+@Composable
+private fun OcrExtractButton(
+    isLoading: Boolean,
+    isDone: Boolean,
+    buttonText: String,
+    onExtract: () -> Unit
+) {
+    Button(
+        onClick = onExtract,
+        modifier = Modifier.fillMaxWidth().height(44.dp),
+        enabled = !isLoading,
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isDone) GreenOk else Accent
+        )
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+            Spacer(Modifier.width(8.dp))
+            Text("Extracting…", fontWeight = FontWeight.SemiBold)
+        } else if (isDone) {
+            Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Re-extract", fontWeight = FontWeight.SemiBold)
+        } else {
+            Icon(Icons.Default.DocumentScanner, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(buttonText, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun OcrStatusRow(state: AnalysisUiState) {
+    if (state.ocrExtractedText != null) {
+        Spacer(Modifier.height(8.dp))
+        val lines = state.ocrExtractedText.lines().count { it.isNotBlank() }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(Icons.Default.CheckCircle, null, tint = GreenOk, modifier = Modifier.size(16.dp))
+            Column {
+                Text(
+                    "Extracted $lines course rows · confidence: ${state.ocrConfidence ?: "?"}",
+                    color = GreenOk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold
+                )
+                state.ocrWarning?.let {
+                    Text(it, color = Color(0xFFF57C00), fontSize = 11.sp)
+                }
+            }
+        }
+    }
+}
+

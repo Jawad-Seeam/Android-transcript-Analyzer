@@ -6,20 +6,32 @@ import okhttp3.RequestBody
 import retrofit2.http.*
 
 /**
- * Retrofit service for the NSU Transcript Analyzer backend.
+ * Retrofit service – endpoints match backend/app.py exactly.
  *
- * The `Authorization: Bearer <token>` header is injected automatically
- * by [AuthTokenInterceptor] – no manual @Header parameter needed here.
+ * Auth token is injected automatically by [AuthTokenInterceptor].
+ * All paths are RELATIVE (no leading slash) so Retrofit resolves them
+ * against the base URL: https://android-transcript-analyzer.onrender.com/
  *
- * File uploads use @Multipart so that CSV, PDF, and Image files are sent
- * as multipart/form-data parts (proper binary upload, not JSON).
+ * ── KEY FINDINGS FROM app.py ───────────────────────────────────────────────
+ *  /api/mobile/auth/google  → JSON body key "id_token"       (line 1625)
+ *  /api/mobile/analyze      → JSON body (manual/csv only)    (line 1750-1770)
+ *  /api/mobile/ocr/extract  → multipart form, file key "file"(line 1835)
+ *  /api/mobile/history      → runs[].id (not run_id)         (line 1354)
+ * ────────────────────────────────────────────────────────────────────────────
  */
 interface TranscriptApiService {
+
+    // ─── Health ───────────────────────────────────────────────────────────────
+
+    @GET("api/health")
+    suspend fun healthCheck(): Map<String, String>
 
     // ─── Authentication ───────────────────────────────────────────────────────
 
     /**
-     * Exchange a Google ID-token (from Credential Manager) for a backend JWT.
+     * Exchange a Google ID-token for a backend session token.
+     * Body: { "id_token": "<google_id_token>" }
+     * Backend reads: payload.get("id_token")  → line 1625
      */
     @POST("api/mobile/auth/google")
     suspend fun authenticateWithGoogle(
@@ -27,7 +39,8 @@ interface TranscriptApiService {
     ): AuthResponse
 
     /**
-     * Simple email-based auth (for testing / non-Google fallback).
+     * Email/name login (NSU @northsouth.edu accounts only).
+     * Body: { "email": "...", "name": "..." }
      */
     @POST("api/mobile/auth/email")
     suspend fun authenticateWithEmail(
@@ -35,45 +48,63 @@ interface TranscriptApiService {
     ): AuthResponse
 
     /**
-     * Fetch the currently authenticated user's profile.
-     * The Bearer token is attached automatically.
+     * Verify stored token & fetch current user profile.
+     * Bearer token injected by [AuthTokenInterceptor].
      */
     @GET("api/mobile/auth/me")
-    suspend fun getCurrentUser(): AuthResponse
+    suspend fun getCurrentUser(): MeResponse
 
     // ─── Analysis ─────────────────────────────────────────────────────────────
 
     /**
-     * Upload a transcript file (CSV, PDF, or Image) for analysis.
+     * Analyze transcript — JSON body.
      *
-     * @param file        The physical file bytes as a multipart part.
-     *                    Part name MUST be "file" to match the Flask endpoint.
-     *                    Null for manual input mode.
-     * @param program     "CSE" or "BBA"
-     * @param inputMethod "csv" | "pdf" | "image" | "manual"
-     * @param manualText  CSV-formatted course list for "manual" mode (optional).
+     * IMPORTANT: The mobile analyze endpoint ONLY supports:
+     *   input_method = "manual"  →  manual_text field
+     *   input_method = "csv"     →  csv_text field  (raw CSV string)
+     * (line 1765-1770 in app.py)
+     *
+     * For PDF/image upload, use [ocrExtract] first, then submit the
+     * extracted manual_text here with input_method="manual".
      */
-    @Multipart
     @POST("api/mobile/analyze")
     suspend fun analyzeTranscript(
-        @Part file: MultipartBody.Part?,
-        @Part("program")      program:     RequestBody,
-        @Part("input_method") inputMethod: RequestBody,
-        @Part("manual_text")  manualText:  RequestBody? = null
+        @Body request: AnalyzeRequest
     ): AnalyzeResponse
+
+    // ─── OCR Extract (PDF / Image → text) ────────────────────────────────────
+
+    /**
+     * Upload a PDF or image file; backend returns extracted course rows
+     * as manual_text that can be submitted to [analyzeTranscript].
+     *
+     * Multipart fields:
+     *   "input_method"  →  "pdf" or "image"
+     *   "file"          →  the file bytes  (line 1835: .get("file_key") or .get("file"))
+     */
+    @Multipart
+    @POST("api/mobile/ocr/extract")
+    suspend fun ocrExtract(
+        @Part("input_method") inputMethod: RequestBody,
+        @Part file: MultipartBody.Part
+    ): OcrExtractResponse
 
     // ─── History ──────────────────────────────────────────────────────────────
 
+    /** Returns runs[].id (not run_id) – see run_to_summary line 1354. */
     @GET("api/mobile/history")
     suspend fun getHistory(): HistoryResponse
 
+    /** run_id path param maps to TranscriptRun.id */
     @GET("api/mobile/history/{run_id}")
     suspend fun getHistoryDetails(
         @Path("run_id") runId: Int
     ): HistoryDetailsResponse
 
-    // ─── Health ───────────────────────────────────────────────────────────────
+    // ─── AI Chat ──────────────────────────────────────────────────────────────
 
-    @GET("api/health")
-    suspend fun healthCheck(): Map<String, String>
+    @POST("api/mobile/ai/chat")
+    suspend fun aiChat(
+        @Body request: AiChatRequest
+    ): AiChatResponse
 }

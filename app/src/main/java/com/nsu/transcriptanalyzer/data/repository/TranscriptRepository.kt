@@ -10,10 +10,11 @@ import com.nsu.transcriptanalyzer.data.prefs.SecurePreferencesManager
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.HttpException
 
 private const val TAG = "TranscriptRepo"
 
-// ─── Result wrapper ───────────────────────────────────────────────────────────
+// ─── Sealed result ────────────────────────────────────────────────────────────
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -29,113 +30,155 @@ class TranscriptRepository(
     private val securePrefs: SecurePreferencesManager
 ) {
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
-
-    suspend fun authenticateWithGoogle(idToken: String): ApiResult<AuthResponse> = runCatching {
-        val response = apiService.authenticateWithGoogle(mapOf("id_token" to idToken))
-        if (response.ok && response.accessToken != null) {
-            securePrefs.saveAccessToken(response.accessToken)
-            response.user?.let { securePrefs.saveUser(it) }
-            ApiResult.Success(response)
-        } else {
-            ApiResult.Error(response.error ?: "Authentication failed")
-        }
-    }.getOrElse {
-        Log.e(TAG, "authenticateWithGoogle", it)
-        ApiResult.Error(it.message ?: "Network error during Google authentication")
-    }
-
-    suspend fun authenticateWithEmail(email: String, name: String): ApiResult<AuthResponse> = runCatching {
-        val response = apiService.authenticateWithEmail(mapOf("email" to email, "name" to name))
-        if (response.ok && response.accessToken != null) {
-            securePrefs.saveAccessToken(response.accessToken)
-            response.user?.let { securePrefs.saveUser(it) }
-            ApiResult.Success(response)
-        } else {
-            ApiResult.Error(response.error ?: "Authentication failed")
-        }
-    }.getOrElse {
-        Log.e(TAG, "authenticateWithEmail", it)
-        ApiResult.Error(it.message ?: "Network error during email authentication")
-    }
-
-    fun logout() {
-        securePrefs.clearAll()
-    }
+    // ── State helpers ─────────────────────────────────────────────────────────
 
     fun isLoggedIn(): Boolean = securePrefs.isLoggedIn
     fun getCachedUser(): User? = securePrefs.getUser()
 
+    // ── Auth ──────────────────────────────────────────────────────────────────
+
+    /** POST /api/mobile/auth/google  –  body: { "id_token": "<google_id_token>" } */
+    suspend fun authenticateWithGoogle(idToken: String): ApiResult<AuthResponse> =
+        safeCall {
+            val response = apiService.authenticateWithGoogle(mapOf("id_token" to idToken))
+            if (response.ok && response.accessToken != null) {
+                securePrefs.saveAccessToken(response.accessToken)
+                response.user?.let { securePrefs.saveUser(it) }
+                ApiResult.Success(response)
+            } else {
+                ApiResult.Error(response.error ?: "Google authentication failed")
+            }
+        }
+
+    /** POST /api/mobile/auth/email  –  body: { "email": "...", "name": "..." } */
+    suspend fun authenticateWithEmail(email: String, name: String): ApiResult<AuthResponse> =
+        safeCall {
+            val response = apiService.authenticateWithEmail(mapOf("email" to email, "name" to name))
+            if (response.ok && response.accessToken != null) {
+                securePrefs.saveAccessToken(response.accessToken)
+                response.user?.let { securePrefs.saveUser(it) }
+                ApiResult.Success(response)
+            } else {
+                ApiResult.Error(response.error ?: "Email authentication failed")
+            }
+        }
+
+    /** GET /api/mobile/auth/me  –  verifies token is still valid */
+    suspend fun verifyToken(): ApiResult<User> = safeCall {
+        val response = apiService.getCurrentUser()
+        if (response.ok && response.user != null) {
+            securePrefs.saveUser(response.user)
+            ApiResult.Success(response.user)
+        } else {
+            ApiResult.Error(response.error ?: "Token verification failed")
+        }
+    }
+
+    fun logout() {
+        securePrefs.clearAll()
+        Log.d(TAG, "User logged out – token cleared")
+    }
+
     // ── Analysis ──────────────────────────────────────────────────────────────
 
     /**
-     * Upload a transcript for analysis.
+     * POST /api/mobile/analyze with JSON body.
      *
-     * For CSV, PDF, and Image modes: reads the file bytes from the content URI
-     * and builds a proper multipart/form-data request.
+     * The backend mobile endpoint ONLY supports:
+     *   inputMethod = "manual"  →  provide manualText
+     *   inputMethod = "csv"     →  provide csvText (raw CSV string)
      *
-     * For Manual mode: serialises the course list as CSV text sent in the
-     * `manual_text` form field.
+     * For PDF/image files, call [ocrExtract] first, then call this with
+     * the returned manualText and inputMethod="manual".
      */
     suspend fun analyzeTranscript(
         inputMethod: String,
         program: String,
-        fileUri: Uri? = null,
-        manualText: String? = null
-    ): ApiResult<AnalysisResult> {
+        manualText: String? = null,
+        csvText: String? = null
+    ): ApiResult<AnalyzeResponse> {
+        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated. Please sign in.", 401)
 
-        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated. Please sign in.")
-
-        return runCatching {
-            val programBody     = program.toRequestBody("text/plain".toMediaTypeOrNull())
-            val inputMethodBody = inputMethod.toRequestBody("text/plain".toMediaTypeOrNull())
-            val manualBody      = manualText?.toRequestBody("text/plain".toMediaTypeOrNull())
-
-            // Build multipart file part (null for manual mode)
-            val filePart: MultipartBody.Part? = fileUri?.let { uri ->
-                buildFilePart(uri, inputMethod)
-            }
-
-            val response = apiService.analyzeTranscript(
-                file        = filePart,
-                program     = programBody,
-                inputMethod = inputMethodBody,
-                manualText  = manualBody
+        return safeCall {
+            val request = AnalyzeRequest(
+                inputMethod = inputMethod,
+                program     = program,
+                manualText  = manualText,
+                csvText     = csvText
             )
-
-            if (response.ok && response.result != null) {
-                ApiResult.Success(response.result)
+            val response = apiService.analyzeTranscript(request)
+            if (response.ok) {
+                ApiResult.Success(response)
             } else {
                 ApiResult.Error(response.error ?: "Analysis failed")
             }
-        }.getOrElse {
-            Log.e(TAG, "analyzeTranscript", it)
-            ApiResult.Error(it.message ?: "Network error during analysis")
         }
     }
 
-    /** Build a correctly-typed multipart Part from a content URI. */
-    private fun buildFilePart(uri: Uri, inputMethod: String): MultipartBody.Part? {
-        return try {
-            val fileName = resolveFileName(uri) ?: "upload"
-            val mimeType = when (inputMethod) {
-                "csv"   -> "text/csv"
-                "pdf"   -> "application/pdf"
-                "image" -> context.contentResolver.getType(uri) ?: "image/jpeg"
-                else    -> "application/octet-stream"
-            }
-            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: return null
+    /**
+     * POST /api/mobile/ocr/extract (multipart).
+     *
+     * Uploads a PDF or image; returns extracted course rows as [OcrExtractResponse.manualText].
+     * The caller should then pass that manualText to [analyzeTranscript] with
+     * inputMethod = "manual".
+     *
+     * File part name accepted by backend: "file" (line 1835 in app.py).
+     */
+    suspend fun ocrExtract(
+        fileUri: Uri,
+        inputMethod: String   // "pdf" or "image"
+    ): ApiResult<OcrExtractResponse> {
+        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated.", 401)
+
+        return safeCall {
+            val mimeType = if (inputMethod == "pdf") "application/pdf" else
+                (context.contentResolver.getType(fileUri) ?: "image/jpeg")
+
+            val fileName = resolveFileName(fileUri) ?: "upload"
+            val bytes = context.contentResolver.openInputStream(fileUri)?.use { it.readBytes() }
+                ?: return@safeCall ApiResult.Error("Could not read file")
 
             val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
-            MultipartBody.Part.createFormData("file", fileName, requestBody)
-        } catch (e: Exception) {
-            Log.e(TAG, "buildFilePart: could not read URI $uri", e)
-            null
+            val filePart = MultipartBody.Part.createFormData("file", fileName, requestBody)
+            val methodPart = inputMethod.toRequestBody("text/plain".toMediaTypeOrNull())
+
+            val response = apiService.ocrExtract(methodPart, filePart)
+            if (response.ok) {
+                ApiResult.Success(response)
+            } else {
+                ApiResult.Error(response.error ?: "OCR extraction failed")
+            }
         }
     }
 
-    /** Resolve the human-readable file name from a content URI. */
+    // ── History ───────────────────────────────────────────────────────────────
+
+    suspend fun getHistory(): ApiResult<List<HistoryRun>> {
+        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated.", 401)
+        return safeCall {
+            val response = apiService.getHistory()
+            if (response.ok) {
+                ApiResult.Success(response.runs ?: emptyList())
+            } else {
+                ApiResult.Error(response.error ?: "Failed to load history")
+            }
+        }
+    }
+
+    suspend fun getHistoryDetails(runId: Int): ApiResult<HistoryDetailsResponse> {
+        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated.", 401)
+        return safeCall {
+            val response = apiService.getHistoryDetails(runId)
+            if (response.ok) {
+                ApiResult.Success(response)
+            } else {
+                ApiResult.Error(response.error ?: "Failed to load run details")
+            }
+        }
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
     private fun resolveFileName(uri: Uri): String? = try {
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val col = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
@@ -146,31 +189,25 @@ class TranscriptRepository(
         null
     }
 
-    // ── History ───────────────────────────────────────────────────────────────
-
-    suspend fun getHistory(): ApiResult<List<HistoryRun>> = runCatching {
-        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated")
-        val response = apiService.getHistory()
-        if (response.ok && response.runs != null) {
-            ApiResult.Success(response.runs)
+    /**
+     * Wraps a suspend call with consistent error handling.
+     * Maps HTTP 401 to a typed [ApiResult.Error] with code=401 so callers can
+     * force re-login. All other exceptions become generic errors.
+     */
+    private suspend fun <T> safeCall(block: suspend () -> ApiResult<T>): ApiResult<T> = try {
+        block()
+    } catch (e: HttpException) {
+        val code = e.code()
+        Log.e(TAG, "HTTP $code: ${e.message()}", e)
+        if (code == 401) {
+            // Token expired / invalid – clear it so the UI shows the login screen
+            securePrefs.clearAll()
+            ApiResult.Error("Session expired. Please sign in again.", 401)
         } else {
-            ApiResult.Error(response.error ?: "Failed to load history")
+            ApiResult.Error("Server error ($code): ${e.message()}", code)
         }
-    }.getOrElse {
-        Log.e(TAG, "getHistory", it)
-        ApiResult.Error(it.message ?: "Network error loading history")
-    }
-
-    suspend fun getHistoryDetails(runId: Int): ApiResult<HistoryDetails> = runCatching {
-        if (!securePrefs.isLoggedIn) return ApiResult.Error("Not authenticated")
-        val response = apiService.getHistoryDetails(runId)
-        if (response.ok && response.run != null) {
-            ApiResult.Success(response.run)
-        } else {
-            ApiResult.Error(response.error ?: "Failed to load details")
-        }
-    }.getOrElse {
-        Log.e(TAG, "getHistoryDetails", it)
-        ApiResult.Error(it.message ?: "Network error loading details")
+    } catch (e: Exception) {
+        Log.e(TAG, "Network/parse error", e)
+        ApiResult.Error(e.message ?: "Unexpected error. Check your internet connection.")
     }
 }
