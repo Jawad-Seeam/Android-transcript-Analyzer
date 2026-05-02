@@ -56,7 +56,8 @@ fun ResultsScreen(
                             color = Color.White
                         )
                         Text(
-                            text = "${result.coursesAnalyzed} courses analyzed",
+                            // latestRows.size = number of unique courses after retake handling
+                            text = "${result.latestRows.size} courses analyzed",
                             fontSize = 12.sp,
                             color = Color(0xFFBDBDBD)
                         )
@@ -101,7 +102,7 @@ fun ResultsScreen(
                 }
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    result.audit.forEach { course ->
+                    result.courseAudit.forEach { course ->
                         CourseStatusCard(course)
                     }
                 }
@@ -110,18 +111,18 @@ fun ResultsScreen(
         }
 
         // Waived Courses
-        if (result.waivedCourses.isNotEmpty()) {
+        if (result.waived.isNotEmpty()) {
             item {
                 SectionCard(
                     title = "Waived Courses",
-                    subtitle = "${result.waivedCourses.size} courses",
+                    subtitle = "${result.waived.size} courses",
                     isExpanded = expandedSectionId == "waived",
                     onExpandChange = {
                         expandedSectionId = if (it) "waived" else ""
                     }
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        result.waivedCourses.forEach { course ->
+                        result.waived.forEach { course ->
                             WaivedCourseItem(course)
                         }
                     }
@@ -391,25 +392,28 @@ private fun CourseStatusCard(course: CourseAudit) {
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = course.code,
+                    // course.course = course code (e.g. "CSE115")
+                    text = course.course,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF1F3A93)
                 )
                 Text(
-                    text = course.name,
+                    // course.category = requirement category
+                    text = course.category,
                     fontSize = 12.sp,
                     color = Color(0xFF666666)
                 )
+                if (course.details.isNotBlank()) {
+                    Text(
+                        text = course.details,
+                        fontSize = 11.sp,
+                        color = Color(0xFF999999)
+                    )
+                }
             }
 
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = course.grade,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF333333)
-                )
                 StatusBadge(course.status)
             }
         }

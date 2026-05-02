@@ -104,9 +104,9 @@ fun LoginScreen(
 
             // ── Divider ──────────────────────────────────────────────────
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF424242))
+                Divider(modifier = Modifier.weight(1f), color = Color(0xFF424242))
                 Text("OR", color = Color(0xFF757575), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp))
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFF424242))
+                Divider(modifier = Modifier.weight(1f), color = Color(0xFF424242))
             }
 
             // ── Email Sign-In Button ──────────────────────────────────────
