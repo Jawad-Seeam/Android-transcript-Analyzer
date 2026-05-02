@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: android-transcript-analyzer
+    runtime: python
+    buildCommand: |
+      apt-get update -y
+      apt-get install -y tesseract-ocr tesseract-ocr-eng
+      pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn.conf.py wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+    plan: free
