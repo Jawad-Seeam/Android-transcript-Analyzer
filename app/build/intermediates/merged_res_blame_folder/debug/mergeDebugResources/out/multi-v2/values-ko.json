@@ -38,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\12c2e992016d1e6636d942e68035ab37\\transformed\\jetified-play-services-base-18.0.1\\res\\values-ko\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\97dc8a77423c479d23a9dbd3a8374812\\transformed\\jetified-play-services-base-18.3.0\\res\\values-ko\\values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
                         "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
@@ -55,7 +55,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\dacdbb4af47076fc3715cfd9f1353899\\transformed\\jetified-play-services-basement-18.2.0\\res\\values-ko\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\5da918b5cfc06e861255de0ecb57bbf8\\transformed\\jetified-play-services-basement-18.3.0\\res\\values-ko\\values.xml",
                     "from": {
                         "startLines": "4",
                         "startColumns": "0",
@@ -69,6 +69,23 @@
                         "startOffsets": "5104",
                         "endColumns": "120",
                         "endOffsets": "5220"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\edd137035128b10d398554fccca5ca1e\\transformed\\jetified-credentials-1.3.0\\res\\values-ko\\values-ko.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,163",
+                        "endColumns": "107,109",
+                        "endOffsets": "158,268"
+                    },
+                    "to": {
+                        "startLines": "29,30",
+                        "startColumns": "4,4",
+                        "startOffsets": "2685,2793",
+                        "endColumns": "107,109",
+                        "endOffsets": "2788,2898"
                     }
                 },
                 {
@@ -86,23 +103,6 @@
                         "startOffsets": "3983,4062,9265,9353,9513,9663,9738,9817,9896,9975,10039,10103,10176,10410,10748,10822,10886",
                         "endColumns": "78,75,87,89,79,74,78,78,78,63,63,72,75,67,73,63,113",
                         "endOffsets": "4057,4133,9348,9438,9588,9733,9812,9891,9970,10034,10098,10171,10247,10473,10817,10881,10995"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\f8b7152487824cef85412fed34ddba17\\transformed\\jetified-credentials-1.2.0\\res\\values-ko\\values-ko.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,163",
-                        "endColumns": "107,109",
-                        "endOffsets": "158,268"
-                    },
-                    "to": {
-                        "startLines": "29,30",
-                        "startColumns": "4,4",
-                        "startOffsets": "2685,2793",
-                        "endColumns": "107,109",
-                        "endOffsets": "2788,2898"
                     }
                 },
                 {

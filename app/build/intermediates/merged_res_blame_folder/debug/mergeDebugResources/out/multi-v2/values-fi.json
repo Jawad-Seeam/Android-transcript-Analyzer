@@ -21,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\f8b7152487824cef85412fed34ddba17\\transformed\\jetified-credentials-1.2.0\\res\\values-fi\\values-fi.xml",
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\edd137035128b10d398554fccca5ca1e\\transformed\\jetified-credentials-1.3.0\\res\\values-fi\\values-fi.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -55,7 +55,24 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\dacdbb4af47076fc3715cfd9f1353899\\transformed\\jetified-play-services-basement-18.2.0\\res\\values-fi\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\97dc8a77423c479d23a9dbd3a8374812\\transformed\\jetified-play-services-base-18.3.0\\res\\values-fi\\values.xml",
+                    "from": {
+                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                        "startOffsets": "193,300,449,576,678,817,939,1051,1154,1291,1393,1538,1660,1804,1939,2001,2067",
+                        "endColumns": "106,148,126,101,138,121,111,102,136,101,144,121,143,134,61,65,78",
+                        "endOffsets": "299,448,575,677,816,938,1050,1153,1290,1392,1537,1659,1803,1938,2000,2066,2145"
+                    },
+                    "to": {
+                        "startLines": "45,46,47,48,49,50,51,52,54,55,56,57,58,59,60,61,62",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "4433,4544,4697,4828,4934,5077,5203,5319,5576,5717,5823,5972,6098,6246,6385,6451,6521",
+                        "endColumns": "110,152,130,105,142,125,115,106,140,105,148,125,147,138,65,69,82",
+                        "endOffsets": "4539,4692,4823,4929,5072,5198,5314,5421,5712,5818,5967,6093,6241,6380,6446,6516,6599"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\5da918b5cfc06e861255de0ecb57bbf8\\transformed\\jetified-play-services-basement-18.3.0\\res\\values-fi\\values.xml",
                     "from": {
                         "startLines": "4",
                         "startColumns": "0",
@@ -120,23 +137,6 @@
                         "startOffsets": "4174,4268,10154,10253,10433,10601,10678,10771,10862,10944,11010,11078,11159,11402,11753,11830,11902",
                         "endColumns": "93,84,98,100,88,76,92,90,81,65,67,80,81,71,76,71,121",
                         "endOffsets": "4263,4348,10248,10349,10517,10673,10766,10857,10939,11005,11073,11154,11236,11469,11825,11897,12019"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\12c2e992016d1e6636d942e68035ab37\\transformed\\jetified-play-services-base-18.0.1\\res\\values-fi\\values.xml",
-                    "from": {
-                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
-                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
-                        "startOffsets": "193,300,449,576,678,817,939,1051,1154,1291,1393,1538,1660,1804,1939,2001,2067",
-                        "endColumns": "106,148,126,101,138,121,111,102,136,101,144,121,143,134,61,65,78",
-                        "endOffsets": "299,448,575,677,816,938,1050,1153,1290,1392,1537,1659,1803,1938,2000,2066,2145"
-                    },
-                    "to": {
-                        "startLines": "45,46,47,48,49,50,51,52,54,55,56,57,58,59,60,61,62",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "4433,4544,4697,4828,4934,5077,5203,5319,5576,5717,5823,5972,6098,6246,6385,6451,6521",
-                        "endColumns": "110,152,130,105,142,125,115,106,140,105,148,125,147,138,65,69,82",
-                        "endOffsets": "4539,4692,4823,4929,5072,5198,5314,5421,5712,5818,5967,6093,6241,6380,6446,6516,6599"
                     }
                 }
             ]

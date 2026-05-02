@@ -331,7 +331,7 @@
     <string name="androidx.credentials.TYPE_PUBLIC_KEY_CREDENTIAL">Passkey</string>
     <string name="androidx_startup" translatable="false">androidx.startup</string>
     <string name="app_name">NSU Transcript Analyzer</string>
-    <string name="backend_url" translatable="false">http://192.168.0.103:5000/</string>
+    <string name="backend_url" translatable="false">https://android-transcript-analyzer.onrender.com/</string>
     <string name="bottom_sheet_collapse_description">Collapse bottom sheet</string>
     <string name="bottom_sheet_dismiss_description">Dismiss bottom sheet</string>
     <string name="bottom_sheet_drag_handle_description">Drag handle</string>
@@ -411,7 +411,7 @@
     <string name="dialog">"Dialog"</string>
     <string name="dropdown_menu">"Dropdown menu"</string>
     <string name="expanded">Expanded</string>
-    <string name="google_client_id" translatable="false">91951666469-7q7ku41hvq9lj8fp5219338r0p6eq4jq.apps.googleusercontent.com</string>
+    <string name="google_client_id" translatable="false">516187756859-mt03oj1718igjf3dkq039u2i48iu3coe.apps.googleusercontent.com</string>
     <string name="in_progress">In progress</string>
     <string name="indeterminate">Partially checked</string>
     <string name="label_cgpa">CGPA</string>

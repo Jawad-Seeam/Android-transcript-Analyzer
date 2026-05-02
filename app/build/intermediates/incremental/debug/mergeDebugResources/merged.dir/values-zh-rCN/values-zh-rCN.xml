@@ -60,7 +60,7 @@
     <string name="common_google_play_services_wear_update_text">必须使用新版 Google Play 服务。该服务很快就会自行更新。</string>
     <string name="common_open_on_phone">在手机上打开</string>
     <string name="common_signin_button_text">登录</string>
-    <string name="common_signin_button_text_long">使用 Google 帐号登录</string>
+    <string name="common_signin_button_text_long">使用 Google 账号登录</string>
     <string msgid="3499643850558715142" name="date_input_headline">"输入日期"</string>
     <string msgid="8562356184193964298" name="date_input_headline_description">"输入日期：%1$s"</string>
     <string msgid="5281836720766682161" name="date_input_invalid_for_pattern">"日期不符合预期格式：%1$s"</string>

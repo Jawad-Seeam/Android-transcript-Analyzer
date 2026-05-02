@@ -21,40 +21,6 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\12c2e992016d1e6636d942e68035ab37\\transformed\\jetified-play-services-base-18.0.1\\res\\values-kk\\values.xml",
-                    "from": {
-                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
-                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
-                        "startOffsets": "193,292,441,563,665,801,923,1042,1147,1308,1410,1563,1688,1837,1990,2049,2104",
-                        "endColumns": "98,148,121,101,135,121,118,104,160,101,152,124,148,152,58,54,73",
-                        "endOffsets": "291,440,562,664,800,922,1041,1146,1307,1409,1562,1687,1836,1989,2048,2103,2177"
-                    },
-                    "to": {
-                        "startLines": "45,46,47,48,49,50,51,52,54,55,56,57,58,59,60,61,62",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "4442,4545,4698,4824,4930,5070,5196,5319,5592,5757,5863,6020,6149,6302,6459,6522,6581",
-                        "endColumns": "102,152,125,105,139,125,122,108,164,105,156,128,152,156,62,58,77",
-                        "endOffsets": "4540,4693,4819,4925,5065,5191,5314,5423,5752,5858,6015,6144,6297,6454,6517,6576,6654"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\dacdbb4af47076fc3715cfd9f1353899\\transformed\\jetified-play-services-basement-18.2.0\\res\\values-kk\\values.xml",
-                    "from": {
-                        "startLines": "4",
-                        "startColumns": "0",
-                        "startOffsets": "195",
-                        "endColumns": "159",
-                        "endOffsets": "354"
-                    },
-                    "to": {
-                        "startLines": "53",
-                        "startColumns": "4",
-                        "startOffsets": "5428",
-                        "endColumns": "163",
-                        "endOffsets": "5587"
-                    }
-                },
-                {
                     "source": "D:\\GradleCache\\caches\\transforms-4\\08540c850f1ccceaf1d776c4577c732b\\transformed\\core-1.12.0\\res\\values-kk\\values-kk.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
@@ -106,7 +72,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\f8b7152487824cef85412fed34ddba17\\transformed\\jetified-credentials-1.2.0\\res\\values-kk\\values-kk.xml",
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\edd137035128b10d398554fccca5ca1e\\transformed\\jetified-credentials-1.3.0\\res\\values-kk\\values-kk.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -120,6 +86,40 @@
                         "startOffsets": "2796,2909",
                         "endColumns": "112,116",
                         "endOffsets": "2904,3021"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\97dc8a77423c479d23a9dbd3a8374812\\transformed\\jetified-play-services-base-18.3.0\\res\\values-kk\\values.xml",
+                    "from": {
+                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                        "startOffsets": "193,292,441,563,665,801,923,1042,1147,1308,1410,1563,1688,1837,1990,2049,2104",
+                        "endColumns": "98,148,121,101,135,121,118,104,160,101,152,124,148,152,58,54,73",
+                        "endOffsets": "291,440,562,664,800,922,1041,1146,1307,1409,1562,1687,1836,1989,2048,2103,2177"
+                    },
+                    "to": {
+                        "startLines": "45,46,47,48,49,50,51,52,54,55,56,57,58,59,60,61,62",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "4442,4545,4698,4824,4930,5070,5196,5319,5592,5757,5863,6020,6149,6302,6459,6522,6581",
+                        "endColumns": "102,152,125,105,139,125,122,108,164,105,156,128,152,156,62,58,77",
+                        "endOffsets": "4540,4693,4819,4925,5065,5191,5314,5423,5752,5858,6015,6144,6297,6454,6517,6576,6654"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\5da918b5cfc06e861255de0ecb57bbf8\\transformed\\jetified-play-services-basement-18.3.0\\res\\values-kk\\values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "195",
+                        "endColumns": "159",
+                        "endOffsets": "354"
+                    },
+                    "to": {
+                        "startLines": "53",
+                        "startColumns": "4",
+                        "startOffsets": "5428",
+                        "endColumns": "163",
+                        "endOffsets": "5587"
                     }
                 },
                 {

@@ -4,6 +4,13 @@
     <selectionStates>
       <SelectionState runConfigName="NSU_Transcript_Analyzer.app">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-05-02T17:20:50.758288Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=398a3ea1" />
+            </handle>
+          </Target>
+        </DropdownSelection>
         <DialogSelection />
       </SelectionState>
     </selectionStates>

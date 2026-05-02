@@ -26,3 +26,4 @@ string title_dashboard
 string title_history
 string title_login
 style Theme.NSUTranscriptAnalyzer
+xml file_provider_paths

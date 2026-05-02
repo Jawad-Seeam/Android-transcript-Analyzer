@@ -4,7 +4,7 @@
             "outputFile": "com.nsu.transcriptanalyzer.app-mergeDebugResources-2:/values-watch-v20/values-watch-v20.xml",
             "map": [
                 {
-                    "source": "D:\\GradleCache\\caches\\transforms-4\\c7acca341718360ff27d0b131f6c8a5d\\transformed\\jetified-play-services-auth-20.7.0\\res\\values-watch-v20\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\transforms-4\\2277683a5417a8cf67e88629f2f6860b\\transformed\\jetified-play-services-auth-21.2.0\\res\\values-watch-v20\\values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11",
                         "startColumns": "0,0,0,0,0,0,0,0",

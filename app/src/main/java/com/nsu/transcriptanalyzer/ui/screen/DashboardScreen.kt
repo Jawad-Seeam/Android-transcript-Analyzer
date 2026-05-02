@@ -543,7 +543,7 @@ private fun OcrExtractButton(
             Spacer(Modifier.width(8.dp))
             Text("Re-extract", fontWeight = FontWeight.SemiBold)
         } else {
-            Icon(Icons.Default.DocumentScanner, null, modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.FindInPage, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(buttonText, fontWeight = FontWeight.SemiBold)
         }
