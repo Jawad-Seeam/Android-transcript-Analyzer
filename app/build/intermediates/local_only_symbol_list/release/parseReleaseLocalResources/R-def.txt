@@ -1,0 +1,28 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher
+string app_name
+string backend_url
+string btn_add_course
+string btn_analyze
+string btn_continue
+string btn_logout
+string btn_new_analysis
+string btn_sign_in_email
+string btn_sign_in_google
+string google_client_id
+string label_cgpa
+string label_courses
+string label_credits
+string label_email
+string label_input_method
+string label_name
+string label_program
+string msg_analysis_complete
+string msg_eligible
+string msg_no_history
+string msg_not_eligible
+string title_dashboard
+string title_history
+string title_login
+style Theme.NSUTranscriptAnalyzer
