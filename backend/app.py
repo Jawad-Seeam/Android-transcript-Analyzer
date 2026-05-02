@@ -862,7 +862,10 @@ def extract_text_from_image_object(image):
 
         return choose_best_text(texts)
     except TesseractNotFoundError:
-        raise ValueError("Image/PDF OCR needs Tesseract installed. Install it and retry.")
+        # Tesseract binary not installed on this server.
+        # For PDFs: direct text via PyMuPDF is used as primary source; this is fine.
+        # For image-only uploads: the caller will raise a user-friendly error.
+        return ""
     except Exception:
         return ""
 
@@ -948,7 +951,8 @@ def extract_text_from_image_columns(image):
             return "\n".join(left_lines + [""] + right_lines)
         return "\n".join(left_lines or right_lines)
     except TesseractNotFoundError:
-        raise ValueError("Image/PDF OCR needs Tesseract installed. Install it and retry.")
+        # Same graceful fallback as extract_text_from_image_object.
+        return ""
     except Exception:
         return ""
 
@@ -972,7 +976,11 @@ def extract_text_from_image(file_storage):
             "parsed_count": parsed_count,
         }
         return text, meta
-    raise ValueError("Image OCR failed. Use a clearer image or upload CSV/manual input.")
+    raise ValueError(
+        "Image OCR requires Tesseract which is not available on this server. "
+        "Please use PDF mode (embedded text is extracted without Tesseract) "
+        "or switch to CSV/Manual input."
+    )
 
 
 def handle_retakes(rows):

@@ -2,12 +2,12 @@ services:
   - type: web
     name: android-transcript-analyzer
     runtime: python
-    buildCommand: |
-      apt-get update -y
-      apt-get install -y tesseract-ocr tesseract-ocr-eng
-      pip install -r requirements.txt
+    # nativePackages installs OS-level packages at build time with Render's own
+    # package manager (not apt-get from your build script, which is read-only).
+    # This is the correct way to install system binaries like Tesseract on Render.
+    nativePackages:
+      - tesseract-ocr
+      - tesseract-ocr-eng
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -c gunicorn.conf.py wsgi:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.0"
     plan: free
