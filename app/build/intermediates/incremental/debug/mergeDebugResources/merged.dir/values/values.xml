@@ -456,8 +456,6 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_history">History</string>
     <string name="title_login">Login</string>
-    <string name="tooltip_description">tooltip</string>
-    <string name="tooltip_label">show tooltip</string>
     <string name="tooltip_long_press_label">Show tooltip</string>
     <string name="tooltip_pane_description">Tooltip</string>
     <style name="AlertDialog.AppCompat" parent="Base.AlertDialog.AppCompat"/>

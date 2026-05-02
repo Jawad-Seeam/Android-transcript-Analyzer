@@ -481,7 +481,8 @@ private fun CourseInputRow(
                 OutlinedTextField(
                     value = course.grade,
                     onValueChange = { onCourseChange(course.copy(grade = it.uppercase())) },
-                    label = { Text("Grade", fontSize = 10.sp) },
+                    label = { Text("Grade (A/B+/F)", fontSize = 10.sp) },
+                    placeholder = { Text("A", fontSize = 10.sp, color = TextSec) },
                     singleLine = true,
                     modifier = Modifier.weight(0.85f),
                     textStyle = MaterialTheme.typography.bodySmall,

@@ -1118,10 +1118,8 @@ int string time_picker_pm 0x7f0c0094
 int string title_dashboard 0x7f0c0095
 int string title_history 0x7f0c0096
 int string title_login 0x7f0c0097
-int string tooltip_description 0x7f0c0098
-int string tooltip_label 0x7f0c0099
-int string tooltip_long_press_label 0x7f0c009a
-int string tooltip_pane_description 0x7f0c009b
+int string tooltip_long_press_label 0x7f0c0098
+int string tooltip_pane_description 0x7f0c0099
 int style AlertDialog_AppCompat 0x7f0d0000
 int style AlertDialog_AppCompat_Light 0x7f0d0001
 int style Animation_AppCompat_Dialog 0x7f0d0002

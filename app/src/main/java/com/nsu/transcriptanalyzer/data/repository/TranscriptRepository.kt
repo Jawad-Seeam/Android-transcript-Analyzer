@@ -10,6 +10,7 @@ import com.nsu.transcriptanalyzer.data.prefs.SecurePreferencesManager
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import retrofit2.HttpException
 
 private const val TAG = "TranscriptRepo"
@@ -191,20 +192,26 @@ class TranscriptRepository(
 
     /**
      * Wraps a suspend call with consistent error handling.
-     * Maps HTTP 401 to a typed [ApiResult.Error] with code=401 so callers can
-     * force re-login. All other exceptions become generic errors.
+     * Parses the JSON error body returned by the backend so the real
+     * message (e.g. "Unknown program 'XYZ'") is surfaced to the user.
      */
     private suspend fun <T> safeCall(block: suspend () -> ApiResult<T>): ApiResult<T> = try {
         block()
     } catch (e: HttpException) {
         val code = e.code()
-        Log.e(TAG, "HTTP $code: ${e.message()}", e)
+        // Try to extract the "error" field from the JSON response body
+        val backendMessage: String = try {
+            val body = e.response()?.errorBody()?.string() ?: ""
+            Log.e(TAG, "HTTP $code body: $body")
+            if (body.isNotBlank()) JSONObject(body).optString("error", "").ifBlank { body.take(120) }
+            else e.message() ?: "HTTP $code"
+        } catch (_: Exception) { e.message() ?: "HTTP $code" }
+
         if (code == 401) {
-            // Token expired / invalid – clear it so the UI shows the login screen
             securePrefs.clearAll()
             ApiResult.Error("Session expired. Please sign in again.", 401)
         } else {
-            ApiResult.Error("Server error ($code): ${e.message()}", code)
+            ApiResult.Error(backendMessage, code)
         }
     } catch (e: Exception) {
         Log.e(TAG, "Network/parse error", e)

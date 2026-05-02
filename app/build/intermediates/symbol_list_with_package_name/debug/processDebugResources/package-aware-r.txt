@@ -1119,8 +1119,6 @@ string time_picker_pm
 string title_dashboard
 string title_history
 string title_login
-string tooltip_description
-string tooltip_label
 string tooltip_long_press_label
 string tooltip_pane_description
 style AlertDialog_AppCompat

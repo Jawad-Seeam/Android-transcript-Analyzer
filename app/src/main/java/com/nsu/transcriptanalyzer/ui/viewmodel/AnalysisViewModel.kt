@@ -8,18 +8,23 @@ import androidx.lifecycle.viewModelScope
 import com.nsu.transcriptanalyzer.data.model.AnalysisResult
 import com.nsu.transcriptanalyzer.data.repository.ApiResult
 import com.nsu.transcriptanalyzer.data.repository.TranscriptRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "AnalysisViewModel"
 
+// Valid letter grades accepted by the backend grade-points table
+val VALID_GRADES = setOf("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F", "W", "I")
+
 data class Course(
-    val code: String    = "",
-    val credits: String = "",
-    val grade: String   = "",
-    val semester: String = "Spring 2024"   // backend requires Semester field
+    val code: String     = "",
+    val credits: String  = "",
+    val grade: String    = "",          // must be a letter grade: A, B+, C, etc.
+    val semester: String = "Spring 2024"
 )
 
 data class AnalysisUiState(
@@ -32,8 +37,9 @@ data class AnalysisUiState(
     val selectedFileName: String?   = null,
     val selectedImageUri: Uri?      = null,
 
-    // OCR intermediate state (for PDF/image flow)
-    val ocrExtractedText: String?   = null,
+    // OCR / extraction intermediate state
+    val ocrExtractedText: String?   = null,   // for pdf/image: manual_text rows
+    val csvExtractedText: String?   = null,   // for csv: raw CSV file content
     val ocrConfidence: String?      = null,
     val ocrWarning: String?         = null,
     val isOcrLoading: Boolean       = false,
@@ -69,6 +75,7 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
             selectedFileName    = null,
             selectedImageUri    = null,
             ocrExtractedText    = null,
+            csvExtractedText    = null,
             ocrConfidence       = null,
             ocrWarning          = null,
             errorMessage        = null
@@ -80,6 +87,7 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
             selectedFileUri  = uri,
             selectedFileName = fileName,
             ocrExtractedText = null,
+            csvExtractedText = null,
             ocrWarning       = null,
             errorMessage     = null
         )
@@ -91,6 +99,7 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
             selectedFileUri  = uri,
             selectedFileName = "photo.jpg",
             ocrExtractedText = null,
+            csvExtractedText = null,
             ocrWarning       = null,
             errorMessage     = null
         )
@@ -120,29 +129,77 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
         }
     }
 
-    // ── OCR Extract (PDF / Image → manual_text) ───────────────────────────────
+    // ── Extract step ──────────────────────────────────────────────────────────
 
     /**
-     * Step 1 for PDF/image mode: extract text via /api/mobile/ocr/extract.
-     * On success the extracted text is stored in ocrExtractedText.
-     * The user can then press Analyze to submit it.
+     * Unified "extract" handler:
+     *  - CSV  → reads file bytes locally as UTF-8; NO API call needed
+     *  - PDF  → calls /api/mobile/ocr/extract with input_method=pdf
+     *  - Image→ calls /api/mobile/ocr/extract with input_method=image
      */
     fun extractOcr(context: Context) {
         val state = _uiState.value
-        val uri = state.selectedFileUri
+        val uri   = state.selectedFileUri
         val method = state.selectedInputMethod
 
         if (uri == null) {
             _uiState.value = state.copy(errorMessage = "Please select a file first.")
             return
         }
-        if (method !in listOf("pdf", "image")) {
-            _uiState.value = state.copy(errorMessage = "Select PDF or Image mode for OCR.")
-            return
+
+        when (method) {
+            "csv" -> extractCsvLocally(context, uri)
+            "pdf", "image" -> extractViaOcrApi(context, uri, method)
+            else -> _uiState.value = state.copy(errorMessage = "Select a file input mode first.")
         }
+    }
 
-        _uiState.value = state.copy(isOcrLoading = true, errorMessage = null, ocrExtractedText = null)
+    /** Reads the CSV file on-device — no network call. */
+    private fun extractCsvLocally(context: Context, uri: Uri) {
+        _uiState.value = _uiState.value.copy(
+            isOcrLoading     = true,
+            errorMessage     = null,
+            csvExtractedText = null
+        )
+        viewModelScope.launch {
+            val content: String? = withContext(Dispatchers.IO) {
+                try {
+                    context.contentResolver.openInputStream(uri)?.use {
+                        it.bufferedReader(Charsets.UTF_8).readText()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "CSV read failed", e)
+                    null
+                }
+            }
+            if (!content.isNullOrBlank()) {
+                val lineCount = content.lines().count { it.isNotBlank() }
+                _uiState.value = _uiState.value.copy(
+                    isOcrLoading     = false,
+                    csvExtractedText = content,
+                    // Reuse ocrExtractedText for the status row display
+                    ocrExtractedText = content,
+                    ocrConfidence    = "LOCAL",
+                    ocrWarning       = null,
+                    errorMessage     = null
+                )
+                Log.d(TAG, "CSV loaded locally: $lineCount lines")
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isOcrLoading = false,
+                    errorMessage = "Could not read CSV file. Make sure it is plain text UTF-8."
+                )
+            }
+        }
+    }
 
+    /** Uploads PDF/image to backend OCR endpoint. */
+    private fun extractViaOcrApi(context: Context, uri: Uri, method: String) {
+        _uiState.value = _uiState.value.copy(
+            isOcrLoading     = true,
+            errorMessage     = null,
+            ocrExtractedText = null
+        )
         viewModelScope.launch {
             when (val result = repository.ocrExtract(uri, method)) {
                 is ApiResult.Success -> {
@@ -160,8 +217,8 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
                 }
                 is ApiResult.Error -> {
                     _uiState.value = _uiState.value.copy(
-                        isOcrLoading = false,
-                        errorMessage = result.message,
+                        isOcrLoading    = false,
+                        errorMessage    = result.message,
                         requiresReLogin = result.code == 401
                     )
                 }
@@ -173,12 +230,12 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
     // ── Analyze ───────────────────────────────────────────────────────────────
 
     /**
-     * Submit transcript for analysis via POST /api/mobile/analyze (JSON).
+     * Submits transcript for analysis via POST /api/mobile/analyze (JSON).
      *
-     * Flow per mode:
-     *  - manual → formats course list as CSV text
-     *  - csv    → sends raw csvText field (NOT implemented yet – use manual)
-     *  - pdf/image → sends ocrExtractedText as manual_text with inputMethod="manual"
+     * Mode routing:
+     *  manual → validates letter grades, sends manual_text
+     *  csv    → sends raw CSV file content as csv_text (input_method="csv")
+     *  pdf/image → OCR result already formatted as manual rows; sends manual_text
      */
     fun analyzeTranscript(context: Context) {
         val state = _uiState.value
@@ -186,14 +243,28 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
 
         viewModelScope.launch {
             val result = when (state.selectedInputMethod) {
+
                 "manual" -> {
-                    // Format: "Course_Code,Credits,Grade,Semester" per line
-                    val lines = state.courses.filter { it.code.isNotBlank() }.map { c ->
-                        "${c.code},${c.credits.ifBlank { "3" }},${c.grade.ifBlank { "A" }},${c.semester}"
-                    }
-                    if (lines.isEmpty()) {
+                    val validCourses = state.courses.filter { it.code.isNotBlank() }
+                    if (validCourses.isEmpty()) {
                         _uiState.value = state.copy(isLoading = false, errorMessage = "Add at least one course.")
                         return@launch
+                    }
+                    // Validate that each grade is a recognised letter grade
+                    val badGrades = validCourses.filter { c ->
+                        c.grade.isNotBlank() && c.grade.uppercase() !in VALID_GRADES
+                    }
+                    if (badGrades.isNotEmpty()) {
+                        val sample = badGrades.first().grade
+                        _uiState.value = state.copy(
+                            isLoading    = false,
+                            errorMessage = "Grade \"$sample\" is not valid. Use letter grades: A, B+, C, D, F, W, etc."
+                        )
+                        return@launch
+                    }
+                    // Format: "Course_Code,Credits,Grade,Semester"
+                    val lines = validCourses.map { c ->
+                        "${c.code},${c.credits.ifBlank { "3" }},${c.grade.ifBlank { "A" }.uppercase()},${c.semester}"
                     }
                     repository.analyzeTranscript(
                         inputMethod = "manual",
@@ -201,8 +272,26 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
                         manualText  = lines.joinToString("\n")
                     )
                 }
+
+                "csv" -> {
+                    // csvExtractedText holds the raw file content read locally
+                    val csv = state.csvExtractedText
+                    if (csv.isNullOrBlank()) {
+                        _uiState.value = state.copy(
+                            isLoading    = false,
+                            errorMessage = "Please tap 'Extract from CSV' first to load your file."
+                        )
+                        return@launch
+                    }
+                    // Send raw CSV content as csv_text — backend parses it
+                    repository.analyzeTranscript(
+                        inputMethod = "csv",
+                        program     = state.selectedProgram,
+                        csvText     = csv
+                    )
+                }
+
                 "pdf", "image" -> {
-                    // Must have already run OCR extract
                     val ocr = state.ocrExtractedText
                     if (ocr.isNullOrBlank()) {
                         _uiState.value = state.copy(
@@ -211,29 +300,13 @@ class AnalysisViewModel(private val repository: TranscriptRepository) : ViewMode
                         )
                         return@launch
                     }
-                    // Submit OCR result as manual_text
                     repository.analyzeTranscript(
                         inputMethod = "manual",
                         program     = state.selectedProgram,
                         manualText  = ocr
                     )
                 }
-                "csv" -> {
-                    // CSV mode: user must have uploaded a file; OCR endpoint handles it
-                    val ocr = state.ocrExtractedText
-                    if (ocr.isNullOrBlank()) {
-                        _uiState.value = state.copy(
-                            isLoading    = false,
-                            errorMessage = "Please tap 'Extract from CSV' first."
-                        )
-                        return@launch
-                    }
-                    repository.analyzeTranscript(
-                        inputMethod = "manual",
-                        program     = state.selectedProgram,
-                        manualText  = ocr
-                    )
-                }
+
                 else -> {
                     _uiState.value = state.copy(isLoading = false, errorMessage = "Unknown input method.")
                     return@launch
